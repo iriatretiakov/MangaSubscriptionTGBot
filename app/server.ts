@@ -87,7 +87,7 @@ bot.hears(/\/rm ([^;'"]+)/, ctx => {
     ctx.reply('nothig is updated :(');
 });
 
-schedule.scheduleJob('*/1 * * * *', async function() {
+schedule.scheduleJob('0 */4 * * *', async function() {
     var readedTitles = GetReadedTitles();
     readedTitles.filter(x => x.Id == 1).forEach(async element => {
         var mangaItem = await GetMangaById(element.TitleId);
