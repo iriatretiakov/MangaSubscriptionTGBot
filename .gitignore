@@ -104,3 +104,6 @@ dist
 .tern-port
 
 *.js
+
+# dynamic data
+data/

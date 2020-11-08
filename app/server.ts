@@ -40,66 +40,86 @@ const bot = new Telegraf(process.env.BOT_TOKEN as string);
 
 bot.hears(/\/start/, async ctx => {
     var chatId = ctx.message?.chat.id;
-    if (chatId) {
-        addChatId(chatId);
-    }
-    // var response = await getMangaById(20723);
-    console.log(GetReadedTitles());
+    console.log(chatId);
     ctx.reply('Hello! '+ chatId);
 });
 
 bot.hears(/\/add ([^;'"]+)/, ctx => {
     var inputData = ctx.match as string[];
     var chatId = ctx.message?.chat.id;
-    if(chatId) {
-        const data = inputData[1].split('-');
-        AddTitle(+(data[0].trim()), +(data[1].trim()), chatId);
-        ctx.reply(`${data[0].trim()} is added with chapter ${data[1].trim()}.`);
-        console.log(GetReadedTitles());
-        return;
+    try {
+        if (chatId) {
+
+            const data = inputData[1].split('-');
+            AddTitle(+(data[0].trim()), +(data[1].trim()), chatId);
+            ctx.reply(`${data[0].trim()} is added with chapter ${data[1].trim()}.`);
+            console.log(GetReadedTitles());
+            return;
+        }
+        ctx.reply('nothig is added :(');
     }
-    ctx.reply('nothig is added :(');
+    catch (e) {
+        console.error(e);
+        ctx.reply(`Something went wrong!`);
+    }
 });
 
 bot.hears(/\/upd ([^;'"]+)/, ctx => {
     var inputData = ctx.match as string[];
     var chatId = ctx.message?.chat.id;
-    if(chatId) {
-        const data = inputData[1].split('-');
-        UpdateLastChapter(+(data[0].trim()), chatId, +(data[1].trim()));
-        ctx.reply(`Last chapter updated to ${data[1].trim()} for ${data[0].trim()}.`);
-        console.log(GetReadedTitles());
-        return;
+    try {
+        if (chatId) {
+            const data = inputData[1].split('-');
+            UpdateLastChapter(+(data[0].trim()), chatId, +(data[1].trim()));
+            ctx.reply(`Last chapter updated to ${data[1].trim()} for ${data[0].trim()}.`);
+            console.log(GetReadedTitles());
+            return;
+        }
+        ctx.reply('nothig is updated :(');
     }
-    ctx.reply('nothig is updated :(');
+    catch (e) {
+        console.error(e);
+        ctx.reply(`Something went wrong!`);
+    }
 });
 
-bot.hears(/\/rm ([^;'"]+)/, ctx => {
+bot.hears(/\/rm ([0-9]+)/, ctx => {
     var inputData = ctx.match as string[];
+    console.log(inputData);
     var chatId = ctx.message?.chat.id;
-    if(chatId) {
-        const data = inputData[1].split('-');
-        RemoveTitleById(+(data[0].trim()), chatId);
-        ctx.reply(`Subscription for ${data[0].trim()} was removed.`);
-        console.log(GetReadedTitles());
-        return;
+    try {
+        if (chatId) {
+            RemoveTitleById(+(inputData[1].trim()), chatId);
+            ctx.reply(`Subscription for ${inputData[1].trim()} was removed.`);
+            console.log(GetReadedTitles());
+            return;
+        }
+        ctx.reply('nothig is remove :(');
     }
-    ctx.reply('nothig is updated :(');
+    catch (e) {
+        console.error(e);
+        ctx.reply(`Something went wrong!`);
+    }
 });
 
 schedule.scheduleJob('0 */4 * * *', async function() {
-    var readedTitles = GetReadedTitles();
-    readedTitles.filter(x => x.Id == 1).forEach(async element => {
-        var mangaItem = await GetMangaById(element.TitleId);
-        var lastChapter = GetUpdated(element, mangaItem.chapter);
-        if(lastChapter) {
-            const message = `There is new chapter for ${mangaItem.manga.title}
+    try {
+        var readedTitles = GetReadedTitles();
+        readedTitles.filter(x => x.Id == 1).forEach(async element => {
+            var mangaItem = await GetMangaById(element.TitleId);
+            var lastChapter = GetUpdated(element, mangaItem.chapter);
+            if (lastChapter) {
+                const message = `There is new chapter for ${mangaItem.manga.title}
             \nhttps://mangadex.org/chapter/${lastChapter.id}`;
-            await bot.telegram.sendPhoto(element.ChatId, 
-                {url: mangaItem.manga.cover_url} as InputFileByURL, 
-                {caption: message})
-        }
-    })
+                await bot.telegram.sendPhoto(element.ChatId,
+                    { url: mangaItem.manga.cover_url } as InputFileByURL,
+                    { caption: message })
+            }
+        })
+    }
+    catch (e) {
+        console.error(e);
+    }
 });
 
 function addChatId(chatId: number): void {
