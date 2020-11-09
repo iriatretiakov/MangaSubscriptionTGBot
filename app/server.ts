@@ -102,7 +102,7 @@ bot.hears(/\/rm ([0-9]+)/, ctx => {
     }
 });
 
-schedule.scheduleJob('0 */4 * * *', async function() {
+schedule.scheduleJob('* */4 * * *', async function() {
     try {
         var readedTitles = GetReadedTitles();
         readedTitles.filter(x => x.Id == 1).forEach(async element => {
