@@ -102,8 +102,9 @@ bot.hears(/\/rm ([0-9]+)/, ctx => {
     }
 });
 
-schedule.scheduleJob('* */4 * * *', async function() {
+schedule.scheduleJob('0 */4 * * *', async function() {
     try {
+        console.log('scheduleJob called');
         var readedTitles = GetReadedTitles();
         readedTitles.filter(x => x.Id == 1).forEach(async element => {
             var mangaItem = await GetMangaById(element.TitleId);
