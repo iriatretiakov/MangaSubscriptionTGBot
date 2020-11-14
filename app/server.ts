@@ -4,6 +4,7 @@ import schedule from 'node-schedule';
 import { InputFileByURL } from 'telegraf/typings/telegram-types';
 const sqlite = require('sqlite-sync');
 const Mangadex = require('mangadex-api');
+const log = require('simple-node-logger').createSimpleLogger('project.log');
 
 sqlite.connect('data/data.db'); 
 
@@ -16,23 +17,6 @@ sqlite.run(`CREATE TABLE IF NOT EXISTS ReadedTitles(Id  INTEGER PRIMARY KEY AUTO
     console.log(res);
 });
 
-// sqlite.insert('ReadedTitles', 
-//     { TitleId: 20723, LastChapter: 41, ChatId: 1 },
-//     function (res: { error: any; }) {
-//         if (res.error)
-//             throw res.error;
-//         console.log(res);
-//     });
-
-    
-// sqlite.insert('ReadedTitles', 
-//     { TitleId: 28438, LastChapter: 15, UserId: 1 },
-//     function (res: { error: any; }) {
-//         if (res.error)
-//             throw res.error;
-//         console.log(res);
-//     });
-
 const client = new Mangadex();
 
 let TOKEN = process.env.BOT_TOKEN;
@@ -40,13 +24,14 @@ const bot = new Telegraf(process.env.BOT_TOKEN as string);
 
 bot.hears(/\/start/, async ctx => {
     var chatId = ctx.message?.chat.id;
-    console.log(chatId);
+    log.info(`start called by ${chatId} at ${new Date().toJSON()}`);
     ctx.reply('Hello! '+ chatId);
 });
 
 bot.hears(/\/add ([^;'"]+)/, ctx => {
     var inputData = ctx.match as string[];
     var chatId = ctx.message?.chat.id;
+    log.info(`add called by ${chatId} at ${new Date().toJSON()} with input data "${inputData[1]}"`);
     try {
         if (chatId) {
 
@@ -59,7 +44,7 @@ bot.hears(/\/add ([^;'"]+)/, ctx => {
         ctx.reply('nothig is added :(');
     }
     catch (e) {
-        console.error(e);
+        log.error(`add called by ${chatId} at ${new Date().toJSON()}, ${e}`);
         ctx.reply(`Something went wrong!`);
     }
 });
@@ -67,6 +52,7 @@ bot.hears(/\/add ([^;'"]+)/, ctx => {
 bot.hears(/\/upd ([^;'"]+)/, ctx => {
     var inputData = ctx.match as string[];
     var chatId = ctx.message?.chat.id;
+    log.info(`update called by ${chatId} at ${new Date().toJSON()} with input data "${inputData[1]}"`);
     try {
         if (chatId) {
             const data = inputData[1].split('-');
@@ -78,15 +64,15 @@ bot.hears(/\/upd ([^;'"]+)/, ctx => {
         ctx.reply('nothig is updated :(');
     }
     catch (e) {
-        console.error(e);
+        log.error(`update called by ${chatId} at ${new Date().toJSON()}, ${e}`);
         ctx.reply(`Something went wrong!`);
     }
 });
 
 bot.hears(/\/rm ([0-9]+)/, ctx => {
     var inputData = ctx.match as string[];
-    console.log(inputData);
     var chatId = ctx.message?.chat.id;
+    log.info(`remove called by ${chatId} at ${new Date().toJSON()} with input data "${inputData[1]}"`);
     try {
         if (chatId) {
             RemoveTitleById(+(inputData[1].trim()), chatId);
@@ -97,14 +83,14 @@ bot.hears(/\/rm ([0-9]+)/, ctx => {
         ctx.reply('nothig is remove :(');
     }
     catch (e) {
-        console.error(e);
+        log.error(`remove called by ${chatId} at ${new Date().toJSON()}, ${e}`);
         ctx.reply(`Something went wrong!`);
     }
 });
 
 schedule.scheduleJob('0 */4 * * *', async function() {
     try {
-        console.log('scheduleJob called');
+        log.info('scheduleJob is called at ', new Date().toJSON());
         var readedTitles = GetReadedTitles();
         readedTitles.filter(x => x.Id == 1).forEach(async element => {
             var mangaItem = await GetMangaById(element.TitleId);
@@ -119,7 +105,7 @@ schedule.scheduleJob('0 */4 * * *', async function() {
         })
     }
     catch (e) {
-        console.error(e);
+        log.error(`scheduleJob called at ${new Date().toJSON()}, cause an error ${e}`);
     }
 });
 
