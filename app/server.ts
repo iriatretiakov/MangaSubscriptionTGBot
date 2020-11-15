@@ -20,7 +20,9 @@ sqlite.run(`CREATE TABLE IF NOT EXISTS ReadedTitles(Id  INTEGER PRIMARY KEY AUTO
 const client = new Mangadex();
 
 let TOKEN = process.env.BOT_TOKEN;
-const bot = new Telegraf(process.env.BOT_TOKEN as string);
+let CRONE = process.env.CHECK_CRONE;
+
+const bot = new Telegraf(TOKEN as string);
 
 bot.hears(/\/start/, async ctx => {
     var chatId = ctx.message?.chat.id;
@@ -88,11 +90,11 @@ bot.hears(/\/rm ([0-9]+)/, ctx => {
     }
 });
 
-schedule.scheduleJob('0 */4 * * *', async function() {
+schedule.scheduleJob(CRONE as string, async function() {
     try {
         log.info('scheduleJob is called at ', new Date().toJSON());
         var readedTitles = GetReadedTitles();
-        readedTitles.filter(x => x.Id == 1).forEach(async element => {
+        readedTitles.forEach(async element => {
             var mangaItem = await GetMangaById(element.TitleId);
             var lastChapter = GetUpdated(element, mangaItem.chapter);
             if (lastChapter) {
