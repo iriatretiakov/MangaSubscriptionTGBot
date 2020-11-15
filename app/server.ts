@@ -38,12 +38,20 @@ bot.hears(/\/add ([^;'"]+)/, ctx => {
         if (chatId) {
 
             const data = inputData[1].split('-');
-            AddTitle(+(data[0].trim()), +(data[1].trim()), chatId);
-            ctx.reply(`${data[0].trim()} is added with chapter ${data[1].trim()}.`);
-            console.log(GetReadedTitles());
-            return;
+            const titleId = +(data[0].trim());
+            const chapter = +(data[1].trim());
+            if (!IsExists(titleId, chatId)) {
+                AddTitle(titleId, chapter, chatId);
+                ctx.reply(`${titleId} is added with chapter ${chapter}.`);
+                console.log(GetReadedTitles());
+                return;
+            }
+            else{
+                ctx.reply(`You already have this title in subscription list.`);
+                return;
+            }
         }
-        ctx.reply('nothig is added :(');
+        ctx.reply('nothing is added :(');
     }
     catch (e) {
         log.error(`add called by ${chatId} at ${new Date().toJSON()}, ${e}`);
@@ -63,7 +71,7 @@ bot.hears(/\/upd ([^;'"]+)/, ctx => {
             console.log(GetReadedTitles());
             return;
         }
-        ctx.reply('nothig is updated :(');
+        ctx.reply('nothing to update :(');
     }
     catch (e) {
         log.error(`update called by ${chatId} at ${new Date().toJSON()}, ${e}`);
@@ -82,7 +90,7 @@ bot.hears(/\/rm ([0-9]+)/, ctx => {
             console.log(GetReadedTitles());
             return;
         }
-        ctx.reply('nothig is remove :(');
+        ctx.reply('nothing to remove :(');
     }
     catch (e) {
         log.error(`remove called by ${chatId} at ${new Date().toJSON()}, ${e}`);
@@ -136,6 +144,11 @@ function AddTitle(titleId: number, lastReadedChapter:number, chatId: number) {
             throw res.error;
         console.log(res);
     });
+}
+
+function IsExists(titleId: number, chatId: number): boolean {
+    var result = sqlite.run(`select * from ReadedTitles where TitleId=${titleId} and ChatId=${chatId}`);
+    return result.length == 0 ? false : true;
 }
 
 function UpdateLastChapter(titleId: number, chatId: number, lastChapter: number) {
