@@ -3,4 +3,5 @@ export interface ReadedTitles {
     TitleId: number;
     LastChapter: number;
     ChatId: number;
+    TitleName: string;
 }

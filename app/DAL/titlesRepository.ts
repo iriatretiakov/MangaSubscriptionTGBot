@@ -8,6 +8,7 @@ export class TitleRepository {
 
         sqlite.run(`CREATE TABLE IF NOT EXISTS ReadedTitles(Id  INTEGER PRIMARY KEY AUTOINCREMENT, 
     TitleId integer not null,
+    TitleName varchar(255) null,
     LastChapter integer not null,
     ChatId integer not null);`, function (res: { error: any; }) {
             if (res.error)
@@ -28,8 +29,9 @@ export class TitleRepository {
         return sqlite.run(`select id from UsersChat where ChatId=${chatId}`)[0];
     }
 
-    AddTitle(titleId: number, lastReadedChapter: number, chatId: number) {
-        sqlite.insert('ReadedTitles', { TitleId: titleId, LastChapter: lastReadedChapter, ChatId: chatId }, function (res: { error: any; }) {
+    AddTitle(titleId: number, titleName: string, lastReadedChapter: number, chatId: number) {
+        console.log('title name', titleName);
+        sqlite.insert('ReadedTitles', { TitleId: titleId, TitleName: titleName, LastChapter: lastReadedChapter, ChatId: chatId }, function (res: { error: any; }) {
             if (res.error)
                 throw res.error;
             console.log(res);

@@ -20,7 +20,18 @@ bot.hears(/\/start/, async ctx => {
     ctx.reply('Hello! '+ chatId);
 });
 
-bot.hears(/\/add ([^;'"]+)/, ctx => {
+bot.hears(/\/list/, ctx => {
+    var chatId = ctx.message?.chat.id;
+    log.info(`get my subscription list called by ${chatId} at ${new Date().toJSON()}`);
+    var mangaSubscriptions = repository.GetReadedTitlesByChatId(chatId as number);
+    var message = '';
+    mangaSubscriptions.forEach(element => {
+        message += `${element.TitleId} - ${element.TitleName} - ${element.LastChapter}\n`;
+    })
+    ctx.reply('Your subscription list:\n*Id - Name - LastChapter*\n'+ message, {parse_mode: 'Markdown'});
+});
+
+bot.hears(/\/add ([0-9]+-[0-9]+)/, async ctx => {
     var inputData = ctx.match as string[];
     var chatId = ctx.message?.chat.id;
     log.info(`add called by ${chatId} at ${new Date().toJSON()} with input data "${inputData[1]}"`);
@@ -31,7 +42,8 @@ bot.hears(/\/add ([^;'"]+)/, ctx => {
             const titleId = +(data[0].trim());
             const chapter = +(data[1].trim());
             if (!repository.IsExists(titleId, chatId)) {
-                repository.AddTitle(titleId, chapter, chatId);
+                var mangaItem = await mangadexService.GetMangaById(titleId);
+                repository.AddTitle(titleId, mangaItem.manga.title, chapter, chatId);
                 ctx.reply(`${titleId} is added with chapter ${chapter}.`);
                 console.log(repository.GetReadedTitles());
                 return;
@@ -49,7 +61,7 @@ bot.hears(/\/add ([^;'"]+)/, ctx => {
     }
 });
 
-bot.hears(/\/upd ([^;'"]+)/, ctx => {
+bot.hears(/\/upd ([0-9]+-[0-9]+)/, ctx => {
     var inputData = ctx.match as string[];
     var chatId = ctx.message?.chat.id;
     log.info(`update called by ${chatId} at ${new Date().toJSON()} with input data "${inputData[1]}"`);
