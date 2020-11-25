@@ -2,31 +2,21 @@ require('dotenv').config();
 import Telegraf from 'telegraf';
 import schedule from 'node-schedule';
 import { InputFileByURL } from 'telegraf/typings/telegram-types';
-const sqlite = require('sqlite-sync');
-const Mangadex = require('mangadex-api');
 const log = require('simple-node-logger').createSimpleLogger('project.log');
-
-sqlite.connect('data/data.db'); 
-
-sqlite.run(`CREATE TABLE IF NOT EXISTS ReadedTitles(Id  INTEGER PRIMARY KEY AUTOINCREMENT, 
-    TitleId integer not null,
-    LastChapter integer not null,
-    ChatId integer not null);`, function (res: { error: any; }) {
-    if (res.error)
-        throw res.error;
-    console.log(res);
-});
-
-const client = new Mangadex();
+import { TitleRepository } from "./DAL/titlesRepository"
+import { MangadexApiService } from "./providers/mangadexProvider"
 
 let TOKEN = process.env.BOT_TOKEN;
 let CRONE = process.env.CHECK_CRONE;
 
 const bot = new Telegraf(TOKEN as string);
+const repository = new TitleRepository();
+const mangadexService = new MangadexApiService();
 
 bot.hears(/\/start/, async ctx => {
     var chatId = ctx.message?.chat.id;
     log.info(`start called by ${chatId} at ${new Date().toJSON()}`);
+    console.log(repository.GetReadedTitles());
     ctx.reply('Hello! '+ chatId);
 });
 
@@ -40,10 +30,10 @@ bot.hears(/\/add ([^;'"]+)/, ctx => {
             const data = inputData[1].split('-');
             const titleId = +(data[0].trim());
             const chapter = +(data[1].trim());
-            if (!IsExists(titleId, chatId)) {
-                AddTitle(titleId, chapter, chatId);
+            if (!repository.IsExists(titleId, chatId)) {
+                repository.AddTitle(titleId, chapter, chatId);
                 ctx.reply(`${titleId} is added with chapter ${chapter}.`);
-                console.log(GetReadedTitles());
+                console.log(repository.GetReadedTitles());
                 return;
             }
             else{
@@ -66,9 +56,9 @@ bot.hears(/\/upd ([^;'"]+)/, ctx => {
     try {
         if (chatId) {
             const data = inputData[1].split('-');
-            UpdateLastChapter(+(data[0].trim()), chatId, +(data[1].trim()));
+            repository.UpdateLastChapter(+(data[0].trim()), chatId, +(data[1].trim()));
             ctx.reply(`Last chapter updated to ${data[1].trim()} for ${data[0].trim()}.`);
-            console.log(GetReadedTitles());
+            console.log(repository.GetReadedTitles());
             return;
         }
         ctx.reply('nothing to update :(');
@@ -85,9 +75,9 @@ bot.hears(/\/rm ([0-9]+)/, ctx => {
     log.info(`remove called by ${chatId} at ${new Date().toJSON()} with input data "${inputData[1]}"`);
     try {
         if (chatId) {
-            RemoveTitleById(+(inputData[1].trim()), chatId);
+            repository.RemoveTitleById(+(inputData[1].trim()), chatId);
             ctx.reply(`Subscription for ${inputData[1].trim()} was removed.`);
-            console.log(GetReadedTitles());
+            console.log(repository.GetReadedTitles());
             return;
         }
         ctx.reply('nothing to remove :(');
@@ -101,16 +91,20 @@ bot.hears(/\/rm ([0-9]+)/, ctx => {
 schedule.scheduleJob(CRONE as string, async function() {
     try {
         log.info('scheduleJob is called at ', new Date().toJSON());
-        var readedTitles = GetReadedTitles();
+        var readedTitles = repository.GetReadedTitles();
         readedTitles.forEach(async element => {
-            var mangaItem = await GetMangaById(element.TitleId);
-            var lastChapter = GetUpdated(element, mangaItem.chapter);
+            var mangaItem = await mangadexService.GetMangaById(element.TitleId);
+            var lastChapter = mangadexService.GetUpdated(element, mangaItem.chapter);
             if (lastChapter) {
                 const message = `There is new chapter for ${mangaItem.manga.title}
-            \nhttps://mangadex.org/chapter/${lastChapter.id}`;
+            \nhttps://mangadex.org/chapter/${lastChapter.id}
+            \nTo update use command \`/upd ${element.TitleId}-${lastChapter.chapter}\` (tap to copy)`;
                 await bot.telegram.sendPhoto(element.ChatId,
                     { url: mangaItem.manga.cover_url } as InputFileByURL,
-                    { caption: message })
+                    {   
+                        caption: message,
+                        parse_mode: "Markdown"
+                    });
             }
         })
     }
@@ -119,91 +113,6 @@ schedule.scheduleJob(CRONE as string, async function() {
     }
 });
 
-function addChatId(chatId: number): void {
-    var userId = GetUserId(chatId);
-    if (!userId) {
-        sqlite.insert('UsersChat', { chatId: chatId }, function (res: { error: any; }) {
-            if (res.error)
-                throw res.error;
-            console.log(res);
-        });
-    }
-}
-
-function GetReadedTitles(): ReadedTitles[] {
-    return sqlite.run(`select * from ReadedTitles`);
-}
-
-function GetUserId(chatId: number) {
-    return sqlite.run(`select id from UsersChat where ChatId=${chatId}`)[0];
-}
-
-function AddTitle(titleId: number, lastReadedChapter:number, chatId: number) {
-    sqlite.insert('ReadedTitles', { TitleId: titleId, LastChapter: lastReadedChapter, ChatId: chatId }, function (res: { error: any; }) {
-        if (res.error)
-            throw res.error;
-        console.log(res);
-    });
-}
-
-function IsExists(titleId: number, chatId: number): boolean {
-    var result = sqlite.run(`select * from ReadedTitles where TitleId=${titleId} and ChatId=${chatId}`);
-    return result.length == 0 ? false : true;
-}
-
-function UpdateLastChapter(titleId: number, chatId: number, lastChapter: number) {
-    sqlite.run(`Update ReadedTitles
-    set LastChapter = ${lastChapter}
-    where TitleId = ${titleId} and ChatId = ${chatId}`);
-}
-
-function RemoveTitleById(titleId: number, chatId: number){
-    return sqlite.delete('ReadedTitles', {TitleId: titleId, Chatid: chatId});
-}
-
-function GetUpdated(subscription: ReadedTitles, chapters: Chapter[]): Chapter | null{
-    var newChater = chapters
-        .find(x => 
-            (x.lang_code == 'gb' || x.lang_code == 'ru') && 
-            +x.chapter > subscription.LastChapter);
-    return newChater ? newChater : null;
-}
-
-async function GetMangaById(titleId: number): Promise<MangadexManga> {
-    return await client.getManga(titleId).then((response: any) => {
-        return response;
-    })
-}
-
 bot.launch()
 
-interface ReadedTitles {
-    Id: number;
-    TitleId: number;
-    LastChapter: number;
-    ChatId: number;
-}
-
-interface MangadexManga {
-    manga: Manga;
-    chapter: Chapter[];
-}
-
-interface Manga {
-    cover_url: string;
-    description: string;
-    title: string;
-    artist: string;
-    author: string;
-    covers: string[];
-}
-
-interface Chapter {
-    id: number;
-    lang_name: string;
-    volume: string;
-    chapter: string;
-    title: string;
-    lang_code: string;
-}
 
