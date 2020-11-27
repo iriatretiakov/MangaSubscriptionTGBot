@@ -13,11 +13,14 @@ const bot = new Telegraf(TOKEN as string);
 const repository = new TitleRepository();
 const mangadexService = new MangadexApiService();
 
-bot.hears(/\/start/, async ctx => {
-    var chatId = ctx.message?.chat.id;
-    log.info(`start called by ${chatId} at ${new Date().toJSON()}`);
-    console.log(repository.GetReadedTitles());
-    ctx.reply('Hello! '+ chatId);
+bot.start(ctx => {
+    var message = `Hello this bot is use to notify new updates for ongoing at mangadex
+Commands exaples:
+/list - get a list of my subscriptions
+/rm - remove subscription by title id
+/add - add title and last read chapter (use like \`/add {titleId}-{lastReadedChapter}\`)
+/upd - update title last chapter  (use like \`/upd {titleId}-{lastReadedChapter}\`)`;
+    ctx.reply(message, {parse_mode: 'Markdown'});
 });
 
 bot.hears(/\/list/, ctx => {
