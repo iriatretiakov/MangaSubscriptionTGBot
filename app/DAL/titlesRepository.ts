@@ -15,6 +15,23 @@ export class TitleRepository {
                 throw res.error;
             console.log(res);
         });
+
+        sqlite.run(`ALTER TABLE ReadedTitles RENAME TO ReadedTitlesBuf;
+
+        CREATE TABLE IF NOT EXISTS ReadedTitles(Id  INTEGER PRIMARY KEY AUTOINCREMENT, 
+        TitleId integer not null,
+        TitleName varchar(255) null,
+        LastChapter float not null,
+        ChatId integer not null);
+        
+        INSERT INTO ReadedTitles(TitleId, TitleName, LastChapter, ChatId)
+        SELECT TitleId, TitleName, LastChapter, ChatId FROM ReadedTitlesBuf;
+        
+        DROP TABLE ReadedTitlesBuf;`, function (res: { error: any; }) {
+            if (res.error)
+                throw res.error;
+            console.log(res);
+        });
     }
 
     GetReadedTitles(): ReadedTitles[] {
