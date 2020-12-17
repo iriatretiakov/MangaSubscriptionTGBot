@@ -34,7 +34,7 @@ bot.hears(/\/list/, ctx => {
     ctx.reply('Your subscription list:\n*Id - Name - LastChapter*\n'+ message, {parse_mode: 'Markdown'});
 });
 
-bot.hears(/\/add ([0-9]+-(([0-9]\.[0-9]+)|([0-9])))/, async ctx => {
+bot.hears(/\/add ([0-9]+-(([0-9]+\.[0-9]+)|([0-9]+)))/, async ctx => {
     var inputData = ctx.match as string[];
     var chatId = ctx.message?.chat.id;
     log.info(`add called by ${chatId} at ${new Date().toJSON()} with input data "${inputData[1]}"`);
@@ -64,7 +64,7 @@ bot.hears(/\/add ([0-9]+-(([0-9]\.[0-9]+)|([0-9])))/, async ctx => {
     }
 });
 
-bot.hears(/\/upd ([0-9]+-(([0-9]\.[0-9]+)|([0-9])))/, ctx => {
+bot.hears(/\/upd ([0-9]+-(([0-9]+\.[0-9]+)|([0-9]+)))/, ctx => {
     var inputData = ctx.match as string[];
     var chatId = ctx.message?.chat.id;
     log.info(`update called by ${chatId} at ${new Date().toJSON()} with input data "${inputData[1]}"`);
