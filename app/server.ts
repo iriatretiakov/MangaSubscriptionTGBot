@@ -1,7 +1,6 @@
 var dotenv = require('dotenv').config();
 import Telegraf from 'telegraf';
-import schedule from 'node-schedule';
-import { InputFileByURL } from 'telegraf/typings/telegram-types';
+// import schedule from 'node-schedule';
 const log = require('simple-node-logger').createSimpleLogger('project.log');
 import { TitleRepository } from "./DAL/titlesRepository"
 import { MangadexApiService } from "./providers/mangadexProvider"
@@ -120,31 +119,31 @@ bot.hears(/\/rm ([0-9]+)/, ctx => {
     }
 });
 
-schedule.scheduleJob(CRONE as string, async function() {
-    try {
-        console.log('scheduleJob is called at');
-        log.info('scheduleJob is called at ', new Date().toJSON());
-        var readedTitles = repository.GetReadedTitles();
-        // readedTitles.forEach(async element => {
-        //     var mangaItem = await mangadexService.GetMangaById(element.TitleId);
-        //     var lastChapter = mangadexService.GetUpdated(element, mangaItem.chapter);
-        //     if (lastChapter) {
-        //         const message = `There is new chapter for ${mangaItem.manga.title}
-        //     \nhttps://mangadex.org/chapter/${lastChapter.id}
-        //     \nTo update use command \`/upd ${element.TitleId}-${lastChapter.chapter}\` (tap to copy)`;
-        //         await bot.telegram.sendPhoto(element.ChatId,
-        //             { url: mangaItem.manga.cover_url } as InputFileByURL,
-        //             {   
-        //                 caption: message,
-        //                 parse_mode: "Markdown"
-        //             });
-        //     }
-        // })
-    }
-    catch (e) {
-        log.error(`scheduleJob called at ${new Date().toJSON()}, cause an error ${e}`);
-    }
-});
+// schedule.scheduleJob(CRONE as string, async function() {
+//     try {
+//         console.log('scheduleJob is called at');
+//         log.info('scheduleJob is called at ', new Date().toJSON());
+//         var readedTitles = repository.GetReadedTitles();
+//         readedTitles.forEach(async element => {
+//             var mangaItem = await mangadexService.GetMangaById(element.TitleId);
+//             var lastChapter = mangadexService.GetUpdated(element, mangaItem.chapter);
+//             if (lastChapter) {
+//                 const message = `There is new chapter for ${mangaItem.manga.title}
+//             \nhttps://mangadex.org/chapter/${lastChapter.id}
+//             \nTo update use command \`/upd ${element.TitleId}-${lastChapter.chapter}\` (tap to copy)`;
+//                 await bot.telegram.sendPhoto(element.ChatId,
+//                     { url: mangaItem.manga.cover_url } as InputFileByURL,
+//                     {   
+//                         caption: message,
+//                         parse_mode: "Markdown"
+//                     });
+//             }
+//         })
+//     }
+//     catch (e) {
+//         log.error(`scheduleJob called at ${new Date().toJSON()}, cause an error ${e}`);
+//     }
+// });
 
 bot.launch()
 
