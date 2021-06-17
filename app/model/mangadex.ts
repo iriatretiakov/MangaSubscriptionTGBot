@@ -1,22 +1,34 @@
 export interface MangadexManga {
-    manga: Manga;
-    chapter: Chapter[];
+    id: string;
+    title: NameAttribute;
+    altTitles: NameAttribute[];
+    description: DescriptionAttribute;
+    originalLanguage: string;
+    lastVolume: string;
+    lastChapter: string;
+    status: string;
 }
 
-export interface Manga {
-    cover_url: string;
-    description: string;
-    title: string;
-    artist: string;
-    author: string;
-    covers: string[];
+export interface NameAttribute {
+    en: string;
+}
+
+export interface DescriptionAttribute {
+    en: string;
+    ru: string;
 }
 
 export interface Chapter {
-    id: number;
-    lang_name: string;
-    volume: string;
-    chapter: string;
+    id: string;
+    volume: number;
+    chapter: number;
     title: string;
-    lang_code: string;
+    translatedLanguage: string;
+}
+
+export class SearchParameters {
+    constructor(){
+        this.ids = [];
+    }
+    ids:string[];
 }

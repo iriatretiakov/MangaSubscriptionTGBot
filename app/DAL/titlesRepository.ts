@@ -6,23 +6,14 @@ export class TitleRepository {
     constructor() {
         sqlite.connect('data/data.db');
 
-        sqlite.run(`CREATE TABLE IF NOT EXISTS ReadedTitles(Id  INTEGER PRIMARY KEY AUTOINCREMENT, 
-    TitleId integer not null,
-    TitleName varchar(255) null,
-    LastChapter integer not null,
-    ChatId integer not null);`, function (res: { error: any; }) {
-            if (res.error)
-                throw res.error;
-            console.log(res);
-        });
-
         sqlite.run(`ALTER TABLE ReadedTitles RENAME TO ReadedTitlesBuf;
 
         CREATE TABLE IF NOT EXISTS ReadedTitles(Id  INTEGER PRIMARY KEY AUTOINCREMENT, 
-        TitleId integer not null,
+        TitleId varchar(36) not null,
         TitleName varchar(255) null,
         LastChapter float not null,
-        ChatId integer not null);
+        ChatId integer not null,
+        LastUpdateAt DATETIME null);
         
         INSERT INTO ReadedTitles(TitleId, TitleName, LastChapter, ChatId)
         SELECT TitleId, TitleName, LastChapter, ChatId FROM ReadedTitlesBuf;
@@ -68,5 +59,17 @@ export class TitleRepository {
 
     RemoveTitleById(titleId: number, chatId: number) {
         return sqlite.delete('ReadedTitles', { TitleId: titleId, Chatid: chatId });
+    }
+
+    GetTitlesNameByChatId(chatId: number): ReadedTitles[] {
+        var result = sqlite.run(`select * from ReadedTitles where  ChatId=${chatId}`);
+        return result;
+    }
+
+    UpdateTitleId(value: ReadedTitles) {
+        console.log('updated title id', value.TitleId);
+        sqlite.run(`Update ReadedTitles
+        set TitleId = '${value.TitleId}', LastUpdateAt = '${value.LastUpdatedAt}'
+        where Id = ${value.Id}`);
     }
 }

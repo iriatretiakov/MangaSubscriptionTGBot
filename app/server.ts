@@ -23,7 +23,7 @@ Commands exaples:
     ctx.reply(message, {parse_mode: 'Markdown'});
 });
 
-bot.hears(/\/list/, ctx => {
+bot.hears(/\/list/, async ctx => {
     var chatId = ctx.message?.chat.id;
     log.info(`get my subscription list called by ${chatId} at ${new Date().toJSON()}`);
     var mangaSubscriptions = repository.GetReadedTitlesByChatId(chatId as number);
@@ -32,6 +32,23 @@ bot.hears(/\/list/, ctx => {
         message += `${element.TitleId} - ${element.TitleName} - ${element.LastChapter}\n`;
     })
     ctx.reply('Your subscription list:\n*Id - Name - LastChapter*\n'+ message, {parse_mode: 'Markdown'});
+});
+
+bot.hears(/\/updateIds/, async ctx => {
+    var chatId = ctx.message?.chat.id;
+    log.info(`update ids called by  ${chatId} at ${new Date().toJSON()}`);
+    var subscriptions = repository.GetTitlesNameByChatId(chatId as number);
+    console.log('subsriptions', subscriptions);
+
+    for (const element of subscriptions) {
+        var titleId = await mangadexService.GetMangaIdByName(element.TitleName);
+        element.TitleId = titleId;
+        element.LastUpdatedAt = new Date();
+        console.log('set titleId', element.TitleId);
+        repository.UpdateTitleId(element);
+    }
+
+    ctx.reply(`Ids updated.`);
 });
 
 bot.hears(/\/add ([0-9]+-(([0-9]+\.[0-9]+)|([0-9]+)))/, async ctx => {
@@ -45,8 +62,8 @@ bot.hears(/\/add ([0-9]+-(([0-9]+\.[0-9]+)|([0-9]+)))/, async ctx => {
             const titleId = +(data[0].trim());
             const chapter = +(data[1].trim());
             if (!repository.IsExists(titleId, chatId)) {
-                var mangaItem = await mangadexService.GetMangaById(titleId);
-                repository.AddTitle(titleId, mangaItem.manga.title, chapter, chatId);
+                var mangaItem = await mangadexService.GetMangaById(titleId.toString());
+                // repository.AddTitle(titleId, mangaItem.manga.title, chapter, chatId);
                 ctx.reply(`${titleId} is added with chapter ${chapter}.`);
                 console.log(repository.GetReadedTitles());
                 return;
@@ -106,23 +123,24 @@ bot.hears(/\/rm ([0-9]+)/, ctx => {
 
 schedule.scheduleJob(CRONE as string, async function() {
     try {
+        console.log('scheduleJob is called at');
         log.info('scheduleJob is called at ', new Date().toJSON());
         var readedTitles = repository.GetReadedTitles();
-        readedTitles.forEach(async element => {
-            var mangaItem = await mangadexService.GetMangaById(element.TitleId);
-            var lastChapter = mangadexService.GetUpdated(element, mangaItem.chapter);
-            if (lastChapter) {
-                const message = `There is new chapter for ${mangaItem.manga.title}
-            \nhttps://mangadex.org/chapter/${lastChapter.id}
-            \nTo update use command \`/upd ${element.TitleId}-${lastChapter.chapter}\` (tap to copy)`;
-                await bot.telegram.sendPhoto(element.ChatId,
-                    { url: mangaItem.manga.cover_url } as InputFileByURL,
-                    {   
-                        caption: message,
-                        parse_mode: "Markdown"
-                    });
-            }
-        })
+        // readedTitles.forEach(async element => {
+        //     var mangaItem = await mangadexService.GetMangaById(element.TitleId);
+        //     var lastChapter = mangadexService.GetUpdated(element, mangaItem.chapter);
+        //     if (lastChapter) {
+        //         const message = `There is new chapter for ${mangaItem.manga.title}
+        //     \nhttps://mangadex.org/chapter/${lastChapter.id}
+        //     \nTo update use command \`/upd ${element.TitleId}-${lastChapter.chapter}\` (tap to copy)`;
+        //         await bot.telegram.sendPhoto(element.ChatId,
+        //             { url: mangaItem.manga.cover_url } as InputFileByURL,
+        //             {   
+        //                 caption: message,
+        //                 parse_mode: "Markdown"
+        //             });
+        //     }
+        // })
     }
     catch (e) {
         log.error(`scheduleJob called at ${new Date().toJSON()}, cause an error ${e}`);
