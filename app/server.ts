@@ -1,4 +1,4 @@
-require('dotenv').config();
+var dotenv = require('dotenv').config();
 import Telegraf from 'telegraf';
 import schedule from 'node-schedule';
 import { InputFileByURL } from 'telegraf/typings/telegram-types';
