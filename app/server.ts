@@ -44,7 +44,6 @@ bot.hears(/\/updateIds/, async ctx => {
         var titleId = await mangadexService.GetMangaIdByName(element.TitleName);
         element.TitleId = titleId;
         element.LastUpdatedAt = new Date();
-        console.log('set titleId', element.TitleId);
         repository.UpdateTitleId(element);
     }
 
