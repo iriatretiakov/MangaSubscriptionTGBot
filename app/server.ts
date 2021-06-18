@@ -29,6 +29,7 @@ bot.hears(/\/list/, async ctx => {
     log.info(`get my subscription list called by ${chatId} at ${new Date().toJSON()}`);
     var mangaSubscriptions = repository.GetReadedTitlesByChatId(chatId as number);
     var message = '';
+    console.log('mangaSubscriptions', mangaSubscriptions);
     mangaSubscriptions.forEach(element => {
         message += `${element.TitleId} - ${element.TitleName} - ${element.LastChapter}\n`;
     })
