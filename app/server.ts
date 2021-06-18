@@ -1,5 +1,7 @@
 var dotenv = require('dotenv').config();
 import Telegraf from 'telegraf';
+var CronJob = require('cron').CronJob;
+
 // import schedule from 'node-schedule';
 const log = require('simple-node-logger').createSimpleLogger('project.log');
 import { TitleRepository } from "./DAL/titlesRepository"
@@ -37,7 +39,6 @@ bot.hears(/\/updateIds/, async ctx => {
     var chatId = ctx.message?.chat.id;
     log.info(`update ids called by  ${chatId} at ${new Date().toJSON()}`);
     var subscriptions = repository.GetTitlesNameByChatId(chatId as number);
-    console.log('subsriptions', subscriptions);
 
     for (const element of subscriptions) {
         var titleId = await mangadexService.GetMangaIdByName(element.TitleName);
@@ -119,31 +120,41 @@ bot.hears(/\/rm ([0-9]+)/, ctx => {
     }
 });
 
-// schedule.scheduleJob(CRONE as string, async function() {
-//     try {
-//         console.log('scheduleJob is called at');
-//         log.info('scheduleJob is called at ', new Date().toJSON());
-//         var readedTitles = repository.GetReadedTitles();
-//         readedTitles.forEach(async element => {
-//             var mangaItem = await mangadexService.GetMangaById(element.TitleId);
-//             var lastChapter = mangadexService.GetUpdated(element, mangaItem.chapter);
-//             if (lastChapter) {
-//                 const message = `There is new chapter for ${mangaItem.manga.title}
-//             \nhttps://mangadex.org/chapter/${lastChapter.id}
-//             \nTo update use command \`/upd ${element.TitleId}-${lastChapter.chapter}\` (tap to copy)`;
-//                 await bot.telegram.sendPhoto(element.ChatId,
-//                     { url: mangaItem.manga.cover_url } as InputFileByURL,
-//                     {   
-//                         caption: message,
-//                         parse_mode: "Markdown"
-//                     });
-//             }
-//         })
-//     }
-//     catch (e) {
-//         log.error(`scheduleJob called at ${new Date().toJSON()}, cause an error ${e}`);
-//     }
-// });
+
+var job = new CronJob(CRONE, async function() {
+    try {
+        log.info('scheduleJob is called at ', new Date().toJSON());
+        var readedTitles = repository.GetReadedTitles();
+
+        var res = await mangadexService.GetUpdated(readedTitles[0]);
+        
+        for(const element of readedTitles) {
+            var lastChapter = await mangadexService.GetUpdated(element);
+            if (lastChapter) {
+                const message = `There is new chapter for ${element.TitleName}
+                    \nhttps://mangadex.org/chapter/${lastChapter.id}
+                    \nTo update use command \`/upd ${element.TitleId}-${lastChapter.id}\` (tap to copy)`;
+                await bot.telegram.sendMessage(element.ChatId,
+                    message,
+                    {
+                        parse_mode: "Markdown"
+                    });
+
+                    // await bot.telegram.sendPhoto(element.ChatId,
+                    //     { url: mangaItem.manga.cover_url } as InputFileByURL,
+                    //     {
+                    //         caption: message,
+                    //         parse_mode: "Markdown"
+                    //     });
+            }
+        }  
+    }
+    catch (e) {
+        log.error(`scheduleJob called at ${new Date().toJSON()}, cause an error ${e}`);
+    }
+  }, null, true);
+
+job.start();
 
 bot.launch()
 

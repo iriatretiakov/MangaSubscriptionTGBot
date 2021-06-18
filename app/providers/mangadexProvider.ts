@@ -8,24 +8,26 @@ export class MangadexApiService {
     constructor(){
     }
 
-    GetUpdated(subscription: ReadedTitles, chapters: Chapter[]): Chapter | null {
-        var newChater = chapters
-            .find(x =>
-                (x.translatedLanguage == 'gb' || x.translatedLanguage == 'ru') &&
-                +x.chapter > subscription.LastChapter);
-        return newChater ? newChater : null;
+    async GetUpdated(subscription: ReadedTitles): Promise<Chapter | undefined> {
+        var chapter = await this.GetChapter(subscription);
+        return chapter ? chapter : undefined;
     }
 
     async GetMangaById(titleId: string): Promise<MangadexManga> {
-            var serchParameters = this.getSerchPararameters(titleId);
-            var manga = await api.Manga.getByQuery(serchParameters);
-            await this.GetChapters(manga);
-            return manga;
+        var serchParameters = this.getSerchPararameters(titleId);
+        var manga = await api.Manga.getByQuery(serchParameters);
+        return manga;
     }
 
-    async GetChapters(manga: any){
-        let chapters = await manga.getFeed({ translatedLanguage: ['en', 'ru'] }) as Chapter[];
-        console.log('chapters - ', chapters.find(x => x.chapter === +(manga as MangadexManga).lastChapter));
+    async GetChapter(subscription: ReadedTitles): Promise<Chapter | undefined>{
+        try {
+            var params = this.getSerchPararametersForChapters(subscription)
+            var chapter = await api.Chapter.getByQuery(params);
+            return chapter;
+        }
+        catch {
+            return undefined;
+        }
     }
 
     async GetMangaIdByName(titleName: string): Promise<string> {
@@ -36,6 +38,17 @@ export class MangadexApiService {
     private getSerchPararameters(titleId: string): SearchParameters {
         var sPrameters = new SearchParameters();
         sPrameters.ids.push(titleId);
+        return sPrameters;
+    }
+
+    private getSerchPararametersForChapters(subscription: ReadedTitles): SearchParameters {
+        var sPrameters = new SearchParameters();
+        sPrameters.manga = subscription.TitleId;
+        sPrameters.limit = 1;
+        sPrameters.order.chapter = 'asc';
+        sPrameters.translatedLanguage.push('en');
+        sPrameters.translatedLanguage.push('ru');
+        sPrameters.chapter.push((subscription.LastChapter+1).toString());
         return sPrameters;
     }
 }

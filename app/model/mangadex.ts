@@ -29,6 +29,23 @@ export interface Chapter {
 export class SearchParameters {
     constructor(){
         this.ids = [];
+        this.limit = 1;
+        this.manga = '';
+        this.order = new ChapterOrder();
+        this.translatedLanguage = [];
+        this.chapter = [];
     }
-    ids:string[];
+    ids: string[];
+    limit: number;
+    manga: string;
+    order: ChapterOrder;
+    translatedLanguage: string[];
+    chapter: string[];
+}
+
+export class ChapterOrder {
+    constructor() {
+        this.chapter = '';
+    }
+    chapter: string;
 }

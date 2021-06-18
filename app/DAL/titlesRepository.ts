@@ -38,7 +38,6 @@ export class TitleRepository {
     }
 
     AddTitle(titleId: number, titleName: string, lastReadedChapter: number, chatId: number) {
-        console.log('title name', titleName);
         sqlite.insert('ReadedTitles', { TitleId: titleId, TitleName: titleName, LastChapter: lastReadedChapter, ChatId: chatId }, function (res: { error: any; }) {
             if (res.error)
                 throw res.error;
@@ -67,7 +66,6 @@ export class TitleRepository {
     }
 
     UpdateTitleId(value: ReadedTitles) {
-        console.log('updated title id', value.TitleId);
         sqlite.run(`Update ReadedTitles
         set TitleId = '${value.TitleId}', LastUpdateAt = '${value.LastUpdatedAt}'
         where Id = ${value.Id}`);
