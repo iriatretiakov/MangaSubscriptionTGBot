@@ -138,7 +138,7 @@ var job = new CronJob(CRONE, async function() {
             if (lastChapter) {
                 const message = `There is new chapter for ${element.TitleName}
                     \nhttps://mangadex.org/chapter/${lastChapter.id}
-                    \nTo update use command \`/upd ${element.TitleId}-${lastChapter.id}\` (tap to copy)`;
+                    \nTo update use command \`/upd ${element.TitleId}|${lastChapter.chapter}\` (tap to copy)`;
                 await bot.telegram.sendMessage(element.ChatId,
                     message,
                     {
