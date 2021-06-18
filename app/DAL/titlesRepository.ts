@@ -6,23 +6,24 @@ export class TitleRepository {
     constructor() {
         sqlite.connect('data/data.db');
 
-        sqlite.run(`ALTER TABLE ReadedTitles RENAME TO ReadedTitlesBuf;
+        // sqlite.run(`ALTER TABLE ReadedTitles RENAME TO ReadedTitlesBuf;
 
-        CREATE TABLE IF NOT EXISTS ReadedTitles(Id  INTEGER PRIMARY KEY AUTOINCREMENT, 
-        TitleId varchar(36) not null,
-        TitleName varchar(255) null,
-        LastChapter float not null,
-        ChatId integer not null,
-        LastUpdateAt DATETIME null);
+        // CREATE TABLE IF NOT EXISTS ReadedTitles(Id  INTEGER PRIMARY KEY AUTOINCREMENT, 
+        // TitleId varchar(36) not null,
+        // TitleName varchar(255) null,
+        // LastChapter float not null,
+        // ChatId integer not null,
+        // LastUpdateAt DATETIME null);
         
-        INSERT INTO ReadedTitles(TitleId, TitleName, LastChapter, ChatId)
-        SELECT TitleId, TitleName, LastChapter, ChatId FROM ReadedTitlesBuf;
+        // INSERT INTO ReadedTitles(TitleId, TitleName, LastChapter, ChatId)
+        // SELECT TitleId, TitleName, LastChapter, ChatId FROM ReadedTitlesBuf;
         
-        DROP TABLE ReadedTitlesBuf;`, function (res: { error: any; }) {
-            if (res.error)
-                throw res.error;
-            console.log(res);
-        });
+        // DROP TABLE ReadedTitlesBuf;
+        // `, function (res: { error: any; }) {
+        //     if (res.error)
+        //         throw res.error;
+        //     console.log(res);
+        // });
     }
 
     GetReadedTitles(): ReadedTitles[] {
@@ -37,7 +38,7 @@ export class TitleRepository {
         return sqlite.run(`select id from UsersChat where ChatId=${chatId}`)[0];
     }
 
-    AddTitle(titleId: number, titleName: string, lastReadedChapter: number, chatId: number) {
+    AddTitle(titleId: string, titleName: string, lastReadedChapter: number, chatId: number) {
         sqlite.insert('ReadedTitles', { TitleId: titleId, TitleName: titleName, LastChapter: lastReadedChapter, ChatId: chatId }, function (res: { error: any; }) {
             if (res.error)
                 throw res.error;
@@ -45,18 +46,18 @@ export class TitleRepository {
         });
     }
 
-    IsExists(titleId: number, chatId: number): boolean {
-        var result = sqlite.run(`select * from ReadedTitles where TitleId=${titleId} and ChatId=${chatId}`);
+    IsExists(titleId: string, chatId: number): boolean {
+        var result = sqlite.run(`select * from ReadedTitles where TitleId='${titleId}' and ChatId=${chatId}`);
         return result.length == 0 ? false : true;
     }
 
-    UpdateLastChapter(titleId: number, chatId: number, lastChapter: number) {
+    UpdateLastChapter(titleId: string, chatId: number, lastChapter: number) {
         sqlite.run(`Update ReadedTitles
     set LastChapter = ${lastChapter}
-    where TitleId = ${titleId} and ChatId = ${chatId}`);
+    where TitleId = '${titleId}' and ChatId = ${chatId}`);
     }
 
-    RemoveTitleById(titleId: number, chatId: number) {
+    RemoveTitleById(titleId: string, chatId: number) {
         return sqlite.delete('ReadedTitles', { TitleId: titleId, Chatid: chatId });
     }
 

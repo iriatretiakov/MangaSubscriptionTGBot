@@ -51,21 +51,25 @@ bot.hears(/\/updateIds/, async ctx => {
     ctx.reply(`Ids updated.`);
 });
 
-bot.hears(/\/add ([0-9]+-(([0-9]+\.[0-9]+)|([0-9]+)))/, async ctx => {
+bot.hears(/\/add ((([0-9A-Fa-f]{8}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{12}))\|([0-9]+))/, async ctx => {
     var inputData = ctx.match as string[];
     var chatId = ctx.message?.chat.id;
     log.info(`add called by ${chatId} at ${new Date().toJSON()} with input data "${inputData[1]}"`);
     try {
         if (chatId) {
 
-            const data = inputData[1].split('-');
-            const titleId = +(data[0].trim());
+            const data = inputData[1].split('|');
+            const titleId = (data[0].trim());
             const chapter = +(data[1].trim());
+            console.log('data', data)
+            console.log('titleId ', titleId, ' chapter ', chapter);
             if (!repository.IsExists(titleId, chatId)) {
-                var mangaItem = await mangadexService.GetMangaById(titleId.toString());
-                // repository.AddTitle(titleId, mangaItem.manga.title, chapter, chatId);
+                console.log('IsExists');
+                var mangaItem = await mangadexService.GetMangaById(titleId);
+                console.log('mangaItem', mangaItem);
+                repository.AddTitle(titleId, mangaItem.localizedTitle.en, chapter, chatId);
                 ctx.reply(`${titleId} is added with chapter ${chapter}.`);
-                console.log(repository.GetReadedTitles());
+                // console.log(repository.GetReadedTitles());
                 return;
             }
             else{
@@ -81,15 +85,15 @@ bot.hears(/\/add ([0-9]+-(([0-9]+\.[0-9]+)|([0-9]+)))/, async ctx => {
     }
 });
 
-bot.hears(/\/upd ([0-9]+-(([0-9]+\.[0-9]+)|([0-9]+)))/, ctx => {
+bot.hears(/\/upd ((([0-9A-Fa-f]{8}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{12}))\|([0-9]+))/, ctx => {
     var inputData = ctx.match as string[];
     var chatId = ctx.message?.chat.id;
     log.info(`update called by ${chatId} at ${new Date().toJSON()} with input data "${inputData[1]}"`);
     try {
         if (chatId) {
-            const data = inputData[1].split('-');
+            const data = inputData[1].split('|');
             console.log('data[1]', data[1]);
-            repository.UpdateLastChapter(+(data[0].trim()), chatId, +(data[1].trim()));
+            repository.UpdateLastChapter((data[0].trim()), chatId, +(data[1].trim()));
             ctx.reply(`Last chapter updated to ${data[1].trim()} for ${data[0].trim()}.`);
             console.log(repository.GetReadedTitles());
             return;
@@ -102,13 +106,13 @@ bot.hears(/\/upd ([0-9]+-(([0-9]+\.[0-9]+)|([0-9]+)))/, ctx => {
     }
 });
 
-bot.hears(/\/rm ([0-9]+)/, ctx => {
+bot.hears(/\/rm (([0-9A-Fa-f]{8}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{12}))/, ctx => {
     var inputData = ctx.match as string[];
     var chatId = ctx.message?.chat.id;
     log.info(`remove called by ${chatId} at ${new Date().toJSON()} with input data "${inputData[1]}"`);
     try {
         if (chatId) {
-            repository.RemoveTitleById(+(inputData[1].trim()), chatId);
+            repository.RemoveTitleById((inputData[1].trim()), chatId);
             ctx.reply(`Subscription for ${inputData[1].trim()} was removed.`);
             console.log(repository.GetReadedTitles());
             return;

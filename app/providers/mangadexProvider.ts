@@ -1,5 +1,5 @@
 import MangadexModel from "mangadex-full-api";
-import { Chapter, MangadexManga, SearchParameters } from "../model/mangadex";
+import { Chapter, MangadexManga, SearchParameters, SearchParametersForChapter } from "../model/mangadex";
 import { ReadedTitles } from "../model/title";
 const api = require("mangadex-full-api");
 
@@ -41,8 +41,8 @@ export class MangadexApiService {
         return sPrameters;
     }
 
-    private getSerchPararametersForChapters(subscription: ReadedTitles): SearchParameters {
-        var sPrameters = new SearchParameters();
+    private getSerchPararametersForChapters(subscription: ReadedTitles): SearchParametersForChapter {
+        var sPrameters = new SearchParametersForChapter();
         sPrameters.manga = subscription.TitleId;
         sPrameters.limit = 1;
         sPrameters.order.chapter = 'asc';

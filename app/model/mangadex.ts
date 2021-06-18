@@ -1,8 +1,8 @@
 export interface MangadexManga {
     id: string;
-    title: NameAttribute;
+    localizedTitle: NameAttribute,
     altTitles: NameAttribute[];
-    description: DescriptionAttribute;
+    localizedDescription: DescriptionAttribute;
     originalLanguage: string;
     lastVolume: string;
     lastChapter: string;
@@ -26,7 +26,17 @@ export interface Chapter {
     translatedLanguage: string;
 }
 
+
 export class SearchParameters {
+    constructor(){
+        this.ids = [];
+        this.limit = 1;
+    }
+    ids: string[];
+    limit: number;
+}
+
+export class SearchParametersForChapter {
     constructor(){
         this.ids = [];
         this.limit = 1;
