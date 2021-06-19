@@ -3,72 +3,149 @@ import { ReadedTitles } from "../model/title";
 const sqlite = require('sqlite-sync');
 
 export class TitleRepository {
+    readonly DBPath: string = "data/data1.db";
     constructor() {
-        sqlite.connect('data/data.db');
 
-        // sqlite.run(`ALTER TABLE ReadedTitles RENAME TO ReadedTitlesBuf;
-
-        // CREATE TABLE IF NOT EXISTS ReadedTitles(Id  INTEGER PRIMARY KEY AUTOINCREMENT, 
-        // TitleId varchar(36) not null,
-        // TitleName varchar(255) null,
-        // LastChapter float not null,
-        // ChatId integer not null,
-        // LastUpdateAt DATETIME null);
+//         sqlite.run(`
+// CREATE TEMPORARY TABLE "ReadedTitlesBuf" (
+// 	"Id"	INTEGER NOT NULL,
+// 	"TitleId"	VARCHAR(36) NOT NULL,
+// 	"TitleName"	Varchar(255),
+// 	"LastChapter"	REAL NOT NULL,
+// 	"ChatId"	INTEGER NOT NULL,
+// 	"LastUpdateAt"	TEXT,
+// 	PRIMARY KEY("Id" AUTOINCREMENT)
+// );
         
-        // INSERT INTO ReadedTitles(TitleId, TitleName, LastChapter, ChatId)
-        // SELECT TitleId, TitleName, LastChapter, ChatId FROM ReadedTitlesBuf;
-        
-        // DROP TABLE ReadedTitlesBuf;
-        // `, function (res: { error: any; }) {
-        //     if (res.error)
-        //         throw res.error;
-        //     console.log(res);
-        // });
+//  INSERT INTO ReadedTitlesBuf(TitleId, TitleName, LastChapter, ChatId)
+//  SELECT TitleId, TitleName, LastChapter, ChatId FROM ReadedTitles;
+		
+// DROP TABLE ReadedTitles;
+		
+// CREATE TABLE "ReadedTitles" (
+// 	"Id"	INTEGER NOT NULL,
+// 	"TitleId"	VARCHAR(36) NOT NULL,
+// 	"TitleName"	Varchar(255),
+// 	"LastChapter"	REAL NOT NULL,
+// 	"ChatId"	INTEGER NOT NULL,
+// 	"LastUpdateAt"	TEXT,
+// 	PRIMARY KEY("Id" AUTOINCREMENT));
+	
+// INSERT INTO ReadedTitles(TitleId, TitleName, LastChapter, ChatId)
+// SELECT TitleId, TitleName, LastChapter, ChatId FROM ReadedTitlesBuf;
+		
+// DROP TABLE 	ReadedTitlesBuf;
+//         `, function (res: { error: any; }) {
+//             if (res.error)
+//                 throw res.error;
+//             console.log(res);
+//         });
     }
 
     GetReadedTitles(): ReadedTitles[] {
-        return sqlite.run(`select * from ReadedTitles`);
+        try {
+            sqlite.connect(this.DBPath);
+            return sqlite.run(`select * from ReadedTitles`);
+        }
+        finally {
+            sqlite.close();
+        }
     }
 
     GetReadedTitlesByChatId(chatId: number): ReadedTitles[] {
-        return sqlite.run(`select * from ReadedTitles where ChatId=${chatId}`);
+        try {
+            sqlite.connect(this.DBPath);
+            return sqlite.run(`select * from ReadedTitles where ChatId=${chatId}`);
+        }
+        finally {
+            sqlite.close();
+        }
     }
 
     GetUserId(chatId: number) {
-        return sqlite.run(`select id from UsersChat where ChatId=${chatId}`)[0];
+        try {
+            sqlite.connect(this.DBPath);
+            return sqlite.run(`select id from UsersChat where ChatId=${chatId}`)[0];
+        }
+        finally {
+            sqlite.close();
+        }
     }
 
     AddTitle(titleId: string, titleName: string, lastReadedChapter: number, chatId: number) {
-        sqlite.insert('ReadedTitles', { TitleId: titleId, TitleName: titleName, LastChapter: lastReadedChapter, ChatId: chatId }, function (res: { error: any; }) {
-            if (res.error)
-                throw res.error;
-            console.log(res);
-        });
+        console.log(`Add title with id - ${titleId} and name ${titleName}`);
+
+        try {
+            sqlite.connect(this.DBPath);
+            var date = new Date().toString();
+            sqlite.insert('ReadedTitles', { TitleId: titleId, TitleName: titleName, LastChapter: lastReadedChapter, ChatId: chatId, LastUpdateAt: date }, function (res: { error: any; }) {
+                if (res.error)
+                    throw res.error;
+                console.log(res);
+            });
+        }
+        finally {
+            sqlite.close();
+        }
+        
     }
 
     IsExists(titleId: string, chatId: number): boolean {
-        var result = sqlite.run(`select * from ReadedTitles where TitleId='${titleId}' and ChatId=${chatId}`);
-        return result.length == 0 ? false : true;
+        try {
+            sqlite.connect(this.DBPath);
+            var result = sqlite.run(`select * from ReadedTitles where TitleId='${titleId}' and ChatId=${chatId}`);
+            return result.length == 0 ? false : true;
+        }
+        finally {
+            sqlite.close();
+        }
     }
 
     UpdateLastChapter(titleId: string, chatId: number, lastChapter: number) {
-        sqlite.run(`Update ReadedTitles
-    set LastChapter = ${lastChapter}
-    where TitleId = '${titleId}' and ChatId = ${chatId}`);
+        try {
+            console.log()
+            sqlite.connect(this.DBPath);
+            sqlite.run(`Update ReadedTitles
+                set LastChapter = ${lastChapter}, LastUpdateAt = '${new Date()}'
+                where TitleId = '${titleId}' and ChatId = ${chatId}`);
+        }
+        finally {
+            sqlite.close();
+        }
     }
 
     RemoveTitleById(titleId: string, chatId: number) {
-        return sqlite.delete('ReadedTitles', { TitleId: titleId, Chatid: chatId });
+        try {
+            sqlite.connect(this.DBPath);
+            return sqlite.delete('ReadedTitles', { TitleId: titleId, Chatid: chatId });
+        }
+        finally {
+            sqlite.close();
+        }
     }
 
     GetTitlesNameByChatId(chatId: number): ReadedTitles[] {
-        var result = sqlite.run(`select * from ReadedTitles where  ChatId=${chatId}`);
-        return result;
+        try {
+            sqlite.connect(this.DBPath);
+            return sqlite.run(`select * from ReadedTitles where  ChatId=${chatId}`);
+        }
+        finally {
+            sqlite.close();
+        }
     }
 
     UpdateTitleId(value: ReadedTitles) {
-        sqlite.run(`Update ReadedTitles
-        set TitleId = '${value.TitleId}', LastUpdateAt = '${value.LastUpdatedAt}'
-        where Id = ${value.Id}`);
+        console.log(`update title with id - ${value.Id} and name ${value.TitleName} and LastUpdateAt - ${value.LastUpdatedAt}`);
+        try {
+            sqlite.connect(this.DBPath);
+            sqlite.run(`Update ReadedTitles
+                set TitleId = '${value.TitleId}', LastUpdateAt = '${value.LastUpdatedAt}'
+                where Id = ${value.Id}`);
+        }
+        finally {
+            sqlite.close();
+        }
+        
     }
+
 }

@@ -39,16 +39,24 @@ bot.hears(/\/list/, async ctx => {
 bot.hears(/\/updateIds/, async ctx => {
     var chatId = ctx.message?.chat.id;
     log.info(`update ids called by  ${chatId} at ${new Date().toJSON()}`);
-    var subscriptions = repository.GetTitlesNameByChatId(chatId as number);
+    try {
+        var subscriptions = repository.GetTitlesNameByChatId(chatId as number);
 
-    for (const element of subscriptions) {
-        var titleId = await mangadexService.GetMangaIdByName(element.TitleName);
-        element.TitleId = titleId;
-        element.LastUpdatedAt = new Date();
-        repository.UpdateTitleId(element);
+        for (const element of subscriptions) {
+            var titleId = await mangadexService.GetMangaIdByName(element.TitleName);
+            console.log(`found title with id - ${titleId} and name ${element.TitleName}`);
+            element.TitleId = titleId;
+            element.LastUpdatedAt = new Date();
+            repository.UpdateTitleId(element);
+        }
+
+        ctx.reply(`Ids updated.`);
+    }
+    catch(e) {
+        log.error(`add called by ${chatId} at ${new Date().toJSON()}, ${e}`);
+        ctx.reply(`Something went wrong!`);
     }
 
-    ctx.reply(`Ids updated.`);
 });
 
 bot.hears(/\/add ((([0-9A-Fa-f]{8}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{12}))\|([0-9]+))/, async ctx => {
@@ -66,7 +74,6 @@ bot.hears(/\/add ((([0-9A-Fa-f]{8}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-
             if (!repository.IsExists(titleId, chatId)) {
                 console.log('IsExists');
                 var mangaItem = await mangadexService.GetMangaById(titleId);
-                console.log('mangaItem', mangaItem);
                 repository.AddTitle(titleId, mangaItem.localizedTitle.en, chapter, chatId);
                 ctx.reply(`${titleId} is added with chapter ${chapter}.`);
                 // console.log(repository.GetReadedTitles());
@@ -106,7 +113,7 @@ bot.hears(/\/upd ((([0-9A-Fa-f]{8}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-
     }
 });
 
-bot.hears(/\/rm (([0-9A-Fa-f]{8}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{12}))/, ctx => {
+bot.hears(/\/rm ([0-9A-Fa-f]{8}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{12})/, ctx => {
     var inputData = ctx.match as string[];
     var chatId = ctx.message?.chat.id;
     log.info(`remove called by ${chatId} at ${new Date().toJSON()} with input data "${inputData[1]}"`);
