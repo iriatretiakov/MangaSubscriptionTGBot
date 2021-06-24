@@ -105,3 +105,7 @@ dist
 
 *.js
 
+# dynamic data
+data
+data/
+.data/
