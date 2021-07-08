@@ -3,11 +3,11 @@ import { ReadedTitles } from "../model/title";
 const sqlite = require('sqlite-sync');
 
 export class TitleRepository {
-    readonly DBPath: string = "data/data1.db";
+    readonly DBPath: string = "data/data.db";
     constructor() {
 
 //         sqlite.run(`
-// CREATE TEMPORARY TABLE "ReadedTitlesBuf" (
+// CREATE TABLE "ReadedTitles" (
 // 	"Id"	INTEGER NOT NULL,
 // 	"TitleId"	VARCHAR(36) NOT NULL,
 // 	"TitleName"	Varchar(255),
@@ -16,30 +16,35 @@ export class TitleRepository {
 // 	"LastUpdateAt"	TEXT,
 // 	PRIMARY KEY("Id" AUTOINCREMENT)
 // );
-        
-//  INSERT INTO ReadedTitlesBuf(TitleId, TitleName, LastChapter, ChatId)
-//  SELECT TitleId, TitleName, LastChapter, ChatId FROM ReadedTitles;
-		
-// DROP TABLE ReadedTitles;
-		
-// CREATE TABLE "ReadedTitles" (
-// 	"Id"	INTEGER NOT NULL,
-// 	"TitleId"	VARCHAR(36) NOT NULL,
-// 	"TitleName"	Varchar(255),
-// 	"LastChapter"	REAL NOT NULL,
-// 	"ChatId"	INTEGER NOT NULL,
-// 	"LastUpdateAt"	TEXT,
-// 	PRIMARY KEY("Id" AUTOINCREMENT));
-	
-// INSERT INTO ReadedTitles(TitleId, TitleName, LastChapter, ChatId)
-// SELECT TitleId, TitleName, LastChapter, ChatId FROM ReadedTitlesBuf;
-		
-// DROP TABLE 	ReadedTitlesBuf;
-//         `, function (res: { error: any; }) {
+//  `, function (res: { error: any; }) {
 //             if (res.error)
 //                 throw res.error;
 //             console.log(res);
 //         });
+    }
+
+    InitTable() {
+        try {
+            sqlite.connect(this.DBPath);
+            sqlite.run(`
+            CREATE TABLE IF NOT EXISTS "ReadedTitles" (
+                "Id"	INTEGER NOT NULL,
+                "TitleId"	VARCHAR(36) NOT NULL,
+                "TitleName"	Varchar(255),
+                "LastChapter"	REAL NOT NULL,
+                "ChatId"	INTEGER NOT NULL,
+                "LastUpdateAt"	TEXT,
+                PRIMARY KEY("Id" AUTOINCREMENT)
+            );
+             `, function (res: { error: any; }) {
+                        if (res.error)
+                            throw res.error;
+                        console.log(res);
+                    });
+        }
+        finally {
+            sqlite.close(); 
+        }
     }
 
     GetReadedTitles(): ReadedTitles[] {

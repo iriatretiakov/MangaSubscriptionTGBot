@@ -36,6 +36,21 @@ bot.hears(/\/list/, async ctx => {
     ctx.reply('Your subscription list:\n*Id - Name - LastChapter*\n'+ message, {parse_mode: 'Markdown'});
 });
 
+bot.hears(/\/init/, ctx => {
+    var chatId = ctx.message?.chat.id;
+    log.info(`init table called by ${chatId} at ${new Date().toJSON()}`);
+    try {
+        repository.InitTable();
+    }
+    catch(e) {
+        log.error(`add called by ${chatId} at ${new Date().toJSON()}, ${e}`);
+        ctx.reply(`Something went wrong!`);
+    }
+    finally {
+        ctx.reply('init table is called and processed.');
+    }
+})
+
 bot.hears(/\/updateIds/, async ctx => {
     var chatId = ctx.message?.chat.id;
     log.info(`update ids called by  ${chatId} at ${new Date().toJSON()}`);
