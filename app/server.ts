@@ -27,45 +27,46 @@ Commands exaples:
 bot.hears(/\/list/, async ctx => {
     var chatId = ctx.message?.chat.id;
     log.info(`get my subscription list called by ${chatId} at ${new Date().toJSON()}`);
-    var mangaSubscriptions = repository.GetReadedTitlesByChatId(chatId as number);
-    var message = '';
-    console.log('mangaSubscriptions', mangaSubscriptions);
-    mangaSubscriptions.forEach(element => {
-        message += `${element.TitleId} - ${element.TitleName} - ${element.LastChapter}\n`;
-    })
-    ctx.reply('Your subscription list:\n*Id - Name - LastChapter*\n'+ message, {parse_mode: 'Markdown'});
+    repository.GetReadedTitlesByChatId(chatId as number).then(mangaSubscriptions => {
+        var message = '';
+        console.log('mangaSubscriptions', mangaSubscriptions);
+        mangaSubscriptions.forEach(element => {
+            message += `${element.TitleId} - ${element.TitleName} - ${element.LastChapter}\n`;
+        })
+        ctx.reply('Your subscription list:\n*Id - Name - LastChapter*\n'+ message, {parse_mode: 'Markdown'});
+    });
+   
 });
 
-bot.hears(/\/init/, ctx => {
-    var chatId = ctx.message?.chat.id;
-    log.info(`init table called by ${chatId} at ${new Date().toJSON()}`);
-    try {
-        repository.InitTable();
-    }
-    catch(e) {
-        log.error(`add called by ${chatId} at ${new Date().toJSON()}, ${e}`);
-        ctx.reply(`Something went wrong!`);
-    }
-    finally {
-        ctx.reply('init table is called and processed.');
-    }
-})
+// bot.hears(/\/init/, ctx => {
+//     var chatId = ctx.message?.chat.id;
+//     log.info(`init table called by ${chatId} at ${new Date().toJSON()}`);
+//     try {
+//         repository.InitTable();
+//     }
+//     catch(e) {
+//         log.error(`add called by ${chatId} at ${new Date().toJSON()}, ${e}`);
+//         ctx.reply(`Something went wrong!`);
+//     }
+//     finally {
+//         ctx.reply('init table is called and processed.');
+//     }
+// })
 
 bot.hears(/\/updateIds/, async ctx => {
     var chatId = ctx.message?.chat.id;
     log.info(`update ids called by  ${chatId} at ${new Date().toJSON()}`);
     try {
-        var subscriptions = repository.GetTitlesNameByChatId(chatId as number);
-
-        for (const element of subscriptions) {
-            var titleId = await mangadexService.GetMangaIdByName(element.TitleName);
-            console.log(`found title with id - ${titleId} and name ${element.TitleName}`);
-            element.TitleId = titleId;
-            element.LastUpdatedAt = new Date();
-            repository.UpdateTitleId(element);
-        }
-
-        ctx.reply(`Ids updated.`);
+        repository.GetTitlesNameByChatId(chatId as number).then(async subscriptions => {
+            for (const element of subscriptions) {
+                var titleId = await mangadexService.GetMangaIdByName(element.TitleName);
+                console.log(`found title with id - ${titleId} and name ${element.TitleName}`);
+                element.TitleId = titleId;
+                element.LastUpdatedAt = new Date();
+                repository.UpdateTitleId(element);
+            }
+            ctx.reply(`Ids updated.`);
+        });
     }
     catch(e) {
         log.error(`add called by ${chatId} at ${new Date().toJSON()}, ${e}`);
@@ -76,30 +77,32 @@ bot.hears(/\/updateIds/, async ctx => {
 
 bot.hears(/\/add ((([0-9A-Fa-f]{8}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{12}))\|([0-9]+))/, async ctx => {
     var inputData = ctx.match as string[];
-    var chatId = ctx.message?.chat.id;
+    const chatId = ctx.message?.chat.id;
     log.info(`add called by ${chatId} at ${new Date().toJSON()} with input data "${inputData[1]}"`);
     try {
         if (chatId) {
 
+            console.log('inner call')
             const data = inputData[1].split('|');
             const titleId = (data[0].trim());
             const chapter = +(data[1].trim());
             console.log('data', data)
             console.log('titleId ', titleId, ' chapter ', chapter);
-            if (!repository.IsExists(titleId, chatId)) {
-                console.log('IsExists');
-                var mangaItem = await mangadexService.GetMangaById(titleId);
-                repository.AddTitle(titleId, mangaItem.localizedTitle.en, chapter, chatId);
-                ctx.reply(`${titleId} is added with chapter ${chapter}.`);
-                // console.log(repository.GetReadedTitles());
-                return;
-            }
-            else{
-                ctx.reply(`You already have this title in subscription list.`);
-                return;
-            }
+            repository.IsExists(titleId, chatId).then(async isExists => {
+                if (!isExists) {
+                    console.log('IsExists');
+                    var mangaItem = await mangadexService.GetMangaById(titleId);
+                    repository.AddTitle(titleId, mangaItem.localizedTitle.en, chapter, chatId);
+                    ctx.reply(`${titleId} is added with chapter ${chapter}.`);
+                    // console.log(repository.GetReadedTitles());
+                    return;
+                }
+                else{
+                    ctx.reply(`You already have this title in subscription list.`);
+                    return;
+                } 
+            });     
         }
-        ctx.reply('nothing is added :(');
     }
     catch (e) {
         log.error(`add called by ${chatId} at ${new Date().toJSON()}, ${e}`);
@@ -151,21 +154,21 @@ bot.hears(/\/rm ([0-9A-Fa-f]{8}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{
 var job = new CronJob(CRONE, async function() {
     try {
         log.info('scheduleJob is called at ', new Date().toJSON());
-        var readedTitles = repository.GetReadedTitles();
+        repository.GetReadedTitles().then(async readedTitles => {
 
-        var res = await mangadexService.GetUpdated(readedTitles[0]);
-        
-        for(const element of readedTitles) {
-            var lastChapter = await mangadexService.GetUpdated(element);
-            if (lastChapter) {
-                const message = `There is new chapter for ${element.TitleName}
+            var res = await mangadexService.GetUpdated(readedTitles[0]);
+
+            for (const element of readedTitles) {
+                var lastChapter = await mangadexService.GetUpdated(element);
+                if (lastChapter) {
+                    const message = `There is new chapter for ${element.TitleName}
                     \nhttps://mangadex.org/chapter/${lastChapter.id}
                     \nTo update use command \`/upd ${element.TitleId}|${lastChapter.chapter}\` (tap to copy)`;
-                await bot.telegram.sendMessage(element.ChatId,
-                    message,
-                    {
-                        parse_mode: "Markdown"
-                    });
+                    await bot.telegram.sendMessage(element.ChatId,
+                        message,
+                        {
+                            parse_mode: "Markdown"
+                        });
 
                     // await bot.telegram.sendPhoto(element.ChatId,
                     //     { url: mangaItem.manga.cover_url } as InputFileByURL,
@@ -173,8 +176,9 @@ var job = new CronJob(CRONE, async function() {
                     //         caption: message,
                     //         parse_mode: "Markdown"
                     //     });
+                }
             }
-        }  
+        });
     }
     catch (e) {
         log.error(`scheduleJob called at ${new Date().toJSON()}, cause an error ${e}`);
