@@ -16,7 +16,7 @@ export class TitleRepository {
     //     port: 3306
     //   });
 
-    connection = mysql.createConnection(process.env.CLEARDB_DATABASE_URL);
+    connection = mysql.createPool(process.env.CLEARDB_DATABASE_URL);
 
 //         this.connection.query(`
 // CREATE TABLE "ReadedTitles" (
@@ -58,8 +58,10 @@ export class TitleRepository {
     GetReadedTitles(): Promise<ReadedTitles[]> {
         try {
             console.log('GetReadedTitles')
+            var self = this;
             return new Promise((resolve, reject) => {
                 this.connection.query(`select * from ReadedTitles`, function (error: any, results: any, fields: any) {
+                    self.connection.release;
                     console.log('results', results);
                     if (error) {
                         reject(error);
@@ -75,10 +77,10 @@ export class TitleRepository {
     GetReadedTitlesByChatId(chatId: number): Promise<ReadedTitles[]> {
         try {
             console.log('GetReadedTitlesByChatId')
-
-            var result: ReadedTitles[] = [];
+            var self = this;
             return new Promise((resolve, reject) => {
                 this.connection.query(`select * from ReadedTitles where ChatId=${chatId}`, function (error: any, results: any, fields: any) {
+                    self.connection.release;
                     console.log('results', results);
                     if (error) {
                         reject(error);
@@ -95,9 +97,10 @@ export class TitleRepository {
         console.log(`Add title with id - ${titleId} and name ${titleName}`);
 
         try {
+            var self = this;
             var title  = {TitleId: titleId, TitleName: titleName, LastChapter: lastReadedChapter, ChatId: chatId, LastUpdateAt:new Date().toString()};
             this.connection.query('INSERT INTO ReadedTitles SET ?', title, function (error: any, results: any, fields: any) {
-
+                self.connection.release;
                 if (error){
                     throw error;}
               });
@@ -112,9 +115,11 @@ export class TitleRepository {
 
     IsExists(titleId: string, chatId: number): Promise<boolean> {
         try {
-            console.log('IsExists')
+            console.log('IsExists');
+            var self = this;
             return new Promise((resolve) => {
             this.connection.query(`select * from ReadedTitles where TitleId='${titleId}' and ChatId=${chatId}`, function (error: any, results: any, fields: any) {
+                self.connection.release;
                 if (error) throw error;
                 results.length == 0 ? resolve(false) : resolve(true);
               }); 
@@ -126,9 +131,12 @@ export class TitleRepository {
 
     UpdateLastChapter(titleId: string, chatId: number, lastChapter: number) {
         try {
+            var self = this;
             this.connection.query(`Update ReadedTitles
                 set LastChapter = ${lastChapter}, LastUpdateAt = '${new Date()}'
                 where TitleId = '${titleId}' and ChatId = ${chatId}`, function (error: any, results: any, fields: any) {
+                self.connection.release;
+
                 if (error) {
                     throw error
                 }
@@ -140,12 +148,14 @@ export class TitleRepository {
 
     RemoveTitleById(titleId: string, chatId: number) {
         try {
-            return this.connection.query(`DELETE FROM ReadedTitles WHERE TitleId = '${titleId}' and ChatId = ${chatId}`, 
+            var self = this;
+            return this.connection.query(`DELETE FROM ReadedTitles WHERE TitleId = '${titleId}' and ChatId = ${chatId}`,
                 function (error: any, results: any, fields: any) {
-                if (error) {
-                    throw error
-                }
-            });
+                    self.connection.release;
+                    if (error) {
+                        throw error
+                    }
+                });
         }
         finally {
         }
@@ -153,8 +163,10 @@ export class TitleRepository {
 
     GetTitlesNameByChatId(chatId: number): Promise<ReadedTitles[]> {
         try {
+            var self = this;
             return new Promise((resolve, reject) => { 
                 this.connection.query(`select * from ReadedTitles where  ChatId=${chatId}`, function (error: any, results: any, fields: any) {
+                    self.connection.release;
                     if (error) {
                         reject(error);
                     };
