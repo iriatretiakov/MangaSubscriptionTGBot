@@ -16,7 +16,7 @@ export class TitleRepository {
     //     port: 3306
     //   });
 
-    connection = mysql.createConnection('mysql://bf6af60edddfb4:45c0f77a@eu-cdbr-west-01.cleardb.com/heroku_ad201644af58bd6?reconnect=true');
+    connection = mysql.createConnection(process.env.CLEARDB_DATABASE_URL);
 
 //         this.connection.query(`
 // CREATE TABLE "ReadedTitles" (
