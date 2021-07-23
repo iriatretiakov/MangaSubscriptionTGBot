@@ -1,4 +1,4 @@
-import MangadexModel from "mangadex-full-api";
+import MangadexModel, { Cover, Manga } from "mangadex-full-api";
 import { Chapter, MangadexManga, SearchParameters, SearchParametersForChapter } from "../model/mangadex";
 import { ReadedTitles } from "../model/title";
 const api = require("mangadex-full-api");
@@ -11,6 +11,21 @@ export class MangadexApiService {
     async GetUpdated(subscription: ReadedTitles): Promise<Chapter | undefined> {
         var chapter = await this.GetChapter(subscription);
         return chapter ? chapter : undefined;
+    }
+
+    async GetCoverName(titleId: string,): Promise<string> {
+        return new Promise(async (resolve, reject) => {
+            await this.GetMangaById(titleId).then(async manga => {
+                await this.GetCover(manga.mainCover.id).then(cover => {
+                    if (cover && manga) {
+                        resolve(cover.imageSource);
+                    }
+                    else {
+                        reject(null);
+                    }
+                });
+            });
+        });
     }
 
     async GetMangaById(titleId: string): Promise<MangadexManga> {
@@ -30,6 +45,12 @@ export class MangadexApiService {
         }
     }
 
+    async GetCover(mainCoverId: string): Promise<Cover> {
+        return new Promise(async (resolve) => {
+            resolve(await api.Cover.get(mainCoverId));
+        });
+    }
+
     async GetMangaIdByName(titleName: string): Promise<string> {
         var manga = await api.Manga.getByQuery(titleName) as MangadexManga;
         return manga.id
@@ -47,7 +68,7 @@ export class MangadexApiService {
         sPrameters.limit = 1;
         sPrameters.order.chapter = 'asc';
         sPrameters.translatedLanguage.push('en');
-        sPrameters.translatedLanguage.push('ru');
+        // sPrameters.translatedLanguage.push('ru');
         sPrameters.chapter.push((subscription.LastChapter+1).toString());
         return sPrameters;
     }

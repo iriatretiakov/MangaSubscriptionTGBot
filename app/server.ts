@@ -1,5 +1,6 @@
 var dotenv = require('dotenv').config();
 import Telegraf from 'telegraf';
+import { InputFileByURL } from 'telegraf/typings/telegram-types';
 var CronJob = require('cron').CronJob;
 
 // import schedule from 'node-schedule';
@@ -161,21 +162,25 @@ var job = new CronJob(CRONE, async function() {
             for (const element of readedTitles) {
                 var lastChapter = await mangadexService.GetUpdated(element);
                 if (lastChapter) {
+
                     const message = `There is new chapter for ${element.TitleName}
                     \nhttps://mangadex.org/chapter/${lastChapter.id}
                     \nTo update use command \`/upd ${element.TitleId}|${lastChapter.chapter}\` (tap to copy)`;
-                    await bot.telegram.sendMessage(element.ChatId,
-                        message,
-                        {
-                            parse_mode: "Markdown"
-                        });
-
-                    // await bot.telegram.sendPhoto(element.ChatId,
-                    //     { url: mangaItem.manga.cover_url } as InputFileByURL,
-                    //     {
-                    //         caption: message,
-                    //         parse_mode: "Markdown"
-                    //     });
+                    
+                    await mangadexService.GetCoverName(element.TitleId).then(async coverName => {
+                        await bot.telegram.sendPhoto(element.ChatId,
+                            { url: coverName } as InputFileByURL,
+                            {
+                                caption: message,
+                                parse_mode: "Markdown"
+                            });
+                    }).catch(async _ => {
+                        await bot.telegram.sendMessage(element.ChatId,
+                            message,
+                            {
+                                parse_mode: "Markdown"
+                            });
+                    });
                 }
             }
         });

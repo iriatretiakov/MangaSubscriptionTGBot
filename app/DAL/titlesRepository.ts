@@ -8,15 +8,15 @@ export class TitleRepository {
        
     }
 
-    // connection = mysql.createConnection({
-    //     host     : 'localhost',
-    //     user     : 'root',
-    //     password : 'taikutsu',
-    //     database : 'mangadex',
-    //     port: 3306
-    //   });
+    connection = mysql.createConnection({
+        host     : 'localhost',
+        user     : 'root',
+        password : 'taikutsu',
+        database : 'mangadex',
+        port: 3306
+      });
 
-    connection = mysql.createPool(process.env.CLEARDB_DATABASE_URL);
+    // connection = mysql.createPool(process.env.CLEARDB_DATABASE_URL);
 
 //         this.connection.query(`
 // CREATE TABLE "ReadedTitles" (

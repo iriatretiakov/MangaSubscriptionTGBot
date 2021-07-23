@@ -7,6 +7,7 @@ export interface MangadexManga {
     lastVolume: string;
     lastChapter: string;
     status: string;
+    mainCover: IdTypeEntity;
 }
 
 export interface NameAttribute {
@@ -16,6 +17,11 @@ export interface NameAttribute {
 export interface DescriptionAttribute {
     en: string;
     ru: string;
+}
+
+export interface IdTypeEntity {
+    id: string;
+    type: string;
 }
 
 export interface Chapter {
