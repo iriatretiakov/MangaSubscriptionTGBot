@@ -156,9 +156,6 @@ var job = new CronJob(CRONE, async function() {
     try {
         log.info('scheduleJob is called at ', new Date().toJSON());
         repository.GetReadedTitles().then(async readedTitles => {
-
-            var res = await mangadexService.GetUpdated(readedTitles[0]);
-
             for (const element of readedTitles) {
                 var lastChapter = await mangadexService.GetUpdated(element);
                 if (lastChapter) {

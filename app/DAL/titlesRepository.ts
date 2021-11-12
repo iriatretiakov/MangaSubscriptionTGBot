@@ -11,7 +11,7 @@ export class TitleRepository {
     // connection = mysql.createConnection({
     //     host     : 'localhost',
     //     user     : 'root',
-    //     password : 'taikutsu',
+    //     password : 'root',
     //     database : 'mangadex',
     //     port: 3306
     //   });
